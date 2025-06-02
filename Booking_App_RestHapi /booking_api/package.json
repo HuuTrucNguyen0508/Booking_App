@@ -1,0 +1,12 @@
+{
+  "name": "rest-hapi-api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@hapi/hapi": "^20.1.5",
+    "rest-hapi": "3.2.2"
+  }
+}

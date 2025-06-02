@@ -1,0 +1,38 @@
+version: '3.8'
+services:
+  mongo:
+    image: mongo
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  user_api:
+    build: ./user_api
+    ports:
+      - "3001:3000"
+    environment:
+      - DB_URI=mongodb://mongo:27017/userdb
+    depends_on:
+      - mongo
+
+  booking_api:
+    build: ./booking_api
+    ports:
+      - "3002:3000"
+    environment:
+      - DB_URI=mongodb://mongo:27017/bookingdb
+    depends_on:
+      - mongo
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - user_api
+      - booking_api
+
+volumes:
+  mongo_data:
