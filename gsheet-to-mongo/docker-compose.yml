@@ -1,0 +1,47 @@
+# gsheet-to-mongo/docker-compose.yml
+version: '3.8'
+
+services:
+  mongo: # This is your MongoDB database service
+    image: mongo:latest
+    container_name: mongodb_local_instance # Changed name slightly for clarity
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: ${DB_NAME:-gsheet_mirror} # Ensures DB is created
+
+  api-server:
+    build: .
+    container_name: gsheet_api_server
+    ports:
+      - "${EXPRESS_PORT:-3000}:${EXPRESS_PORT:-3000}" # Use EXPRES_PORT from .env, default 3000
+    environment:
+      MONGO_URI: ${MONGO_URI} # Taken from host .env
+      DB_NAME: ${DB_NAME:-gsheet_mirror} # Taken from host .env, default gsheet_mirror
+      EXPRESS_PORT: ${EXPRESS_PORT:-3000}
+      SHEET_NAMES: ${SHEET_NAMES} # Pass sheet names to API server for the /api/collections endpoint
+    depends_on:
+      - mongo
+    command: npm start
+    restart: always
+
+  data-ingester:
+    build: .
+    container_name: gsheet_data_ingester
+    environment:
+      SHEET_ID: ${SHEET_ID} # Taken from host .env
+      SHEET_NAMES: ${SHEET_NAMES} # Taken from host .env
+      MONGO_URI: ${MONGO_URI} # Taken from host .env
+      DB_NAME: ${DB_NAME:-gsheet_mirror} # Taken from host .env
+      # GOOGLE_APPLICATION_CREDENTIALS: /app/google-service-account.json # Uncomment if you switch to private sheets
+    # volumes: # Uncomment and configure if you switch to private sheets
+      # - ${GOOGLE_APPLICATION_CREDENTIALS}:/app/google-service-account.json:ro
+    depends_on:
+      - mongo
+    command: npm run ingest
+    # No restart policy for ingester, it's meant to run and exit
+
+volumes:
+  mongo_data:
